@@ -1,0 +1,6 @@
+# directories #
+###############
+**/build*/
+**/.vscode/
+# view git ignored status #
+# git status --ignored
