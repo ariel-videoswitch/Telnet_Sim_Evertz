@@ -51,7 +51,7 @@ void handle_client(SOCKET client_socket) {
             }
 
             // Check if the command contains the sequence ^A5 (0x01 0x35)
-            if (strstr(buffer, "5") != NULL) {
+            if (strstr(buffer, "\x01\x35") != NULL) {
                 // Respond with '*'
                 send(client_socket, "*\r\n", 3, 0);
                 // if (bytes_received > 0) {
@@ -88,7 +88,8 @@ void handle_client(SOCKET client_socket) {
                     
                     }
                 }
-            } else if (strstr(buffer, "3") != NULL) {
+            } // Check if the command contains the sequence ^A3 (0x01 0x33)
+            else if  (strstr(buffer, "\x01\x33") != NULL) {
                 // Respond with ':'
                 send(client_socket, "*\r\n", 3, 0);
 
