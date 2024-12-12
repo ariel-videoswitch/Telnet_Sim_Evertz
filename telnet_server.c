@@ -39,51 +39,80 @@ void handle_client(SOCKET client_socket) {
     if (strcmp(username, USERNAME) == 0 && strcmp(password, PASSWORD) == 0) {
         send(client_socket, "Use ^AH{return} for help\r\n", 24, 0);
 
-        // Receive a single command
-        memset(buffer, 0, BUFFER_SIZE);
-        int bytes_received = recv(client_socket, buffer, BUFFER_SIZE, 0);
+        while(1){
+            // Receive a single command
+            memset(buffer, 0, BUFFER_SIZE);
+            int bytes_received = recv(client_socket, buffer, BUFFER_SIZE, 0);
 
-        if (bytes_received <= 0) {
-            closesocket(client_socket);
-            printf("Client disconnected.\n");
-            return;
-        }
+            if (bytes_received <= 0) {
+                closesocket(client_socket);
+                printf("Client disconnected.\n");
+                return;
+            }
 
-        // Respond with '*'
-        send(client_socket, "*\r\n", 3, 0);
-        // if (bytes_received > 0) {
-        //     // Respond with '*'
-        //     send(client_socket, "*\r\n", 3, 0);
-        // }
+            // Check if the command contains the sequence ^A5 (0x01 0x35)
+            if (strstr(buffer, "5") != NULL) {
+                // Respond with '*'
+                send(client_socket, "*\r\n", 3, 0);
+                // if (bytes_received > 0) {
+                //     // Respond with '*'
+                //     send(client_socket, "*\r\n", 3, 0);
+                // }
 
-        // Send repetitive message word by word
-        while (1) {
-            // char temp_message[BUFFER_SIZE];
-            // strncpy(temp_message, message, BUFFER_SIZE);
-            // char *token = strtok(temp_message, " ");
-            // while (token != NULL) {
-            //     if (send(client_socket, token, strlen(token), 0) == SOCKET_ERROR) {
-            //         // Exit if sending fails (e.g., client disconnects)
-            //         closesocket(client_socket);
-            //         printf("Client disconnected.\n");
-            //         return;
-            //     }
-            //     send(client_socket, "\r\n", 2, 0); // Newline after each word
-            //     Sleep(500); // Delay of 500 ms
-            //     token = strtok(NULL, " ");
-            // }
+                // Send repetitive message word by word
+                while (1) {
+                    // char temp_message[BUFFER_SIZE];
+                    // strncpy(temp_message, message, BUFFER_SIZE);
+                    // char *token = strtok(temp_message, " ");
+                    // while (token != NULL) {
+                    //     if (send(client_socket, token, strlen(token), 0) == SOCKET_ERROR) {
+                    //         // Exit if sending fails (e.g., client disconnects)
+                    //         closesocket(client_socket);
+                    //         printf("Client disconnected.\n");
+                    //         return;
+                    //     }
+                    //     send(client_socket, "\r\n", 2, 0); // Newline after each word
+                    //     Sleep(500); // Delay of 500 ms
+                    //     token = strtok(NULL, " ");
+                    // }
 
-            for (size_t i = 0; i < size_data; ++i) {
-                if (send(client_socket, (const char*) &buffer_data[i], 1, 0) == SOCKET_ERROR) {
-                    // Exit if sending fails (e.g., client disconnects)
-                    closesocket(client_socket);
-                    printf("Client disconnected.\n");
-                    return;
+                    // Send repetitive message byte by byte
+                    for (size_t i = 0; i < size_data; ++i) {
+                        if (send(client_socket, (const char*) &buffer_data[i], 1, 0) == SOCKET_ERROR) {
+                            // Exit if sending fails (e.g., client disconnects)
+                            closesocket(client_socket);
+                            printf("Client disconnected.\n");
+                            return;
+                        }
+                        Sleep(100); // Retardo de 500 ms entre bytes
+                    
+                    }
                 }
-                Sleep(100); // Retardo de 500 ms entre bytes
-            
+            } else if (strstr(buffer, "3") != NULL) {
+                // Respond with ':'
+                send(client_socket, "*\r\n", 3, 0);
+
+                // Receive and print bytes in hexadecimal
+                while (1) {
+                    memset(buffer, 0, BUFFER_SIZE);
+                    bytes_received = recv(client_socket, buffer, BUFFER_SIZE, 0);
+                    if (bytes_received <= 0) {
+                        // Exit loop if client disconnects
+                        // Exit if sending fails (e.g., client disconnects)
+                        closesocket(client_socket);
+                        printf("Client disconnected.\n");
+                        return;
+                    }
+
+                    for (int i = 0; i < bytes_received; ++i) {
+                        printf("0x%02X ", (unsigned char)buffer[i]);
+                        fflush(stdout);
+                    }
+                    //printf("\n");
+                }
             }
         }
+
     } else {
         send(client_socket, "Login incorrect. Authentication failed.\r\n", 25, 0);
     }
@@ -133,6 +162,9 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
+    printf("==== Telnet Simulator v1.0 - Encoder/Decoder Evertz ====\n");
+    printf("Credentials:\nUser: admin - Pass: 1234\n");
+    printf("Command ^A5: Decoder\nCommand ^A3: Encoder\n");
     printf("Telnet server is running on port %d\n", PORT);
 
     // Acepta clientes
